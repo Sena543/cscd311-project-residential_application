@@ -12,7 +12,7 @@ body{
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%-50%);
-	background: ##6c7a89;
+	background: #6c7a89;
 	text-align: center;
 }
 
@@ -54,6 +54,6 @@ button{
 	cursor: pointer;
 }
 
-button: hover{
+button:hover{
 	background: #2ecc71
 }
