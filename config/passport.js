@@ -4,17 +4,17 @@ const bcrypt = require('bcrypt');
 
 const registered_students = require('../models/studentModel.js')
 
+
 module.exports = function(passport){
+
     passport.use(
         new LocalStrategy({usernameField:'student_id'}, (student_id, password, done)=>{
             //find student id with entered
-
-            registered_students.findOne({ id: student_id })
-            .then(student =>{
+            registered_students.findOne({ id: student_id})
+            .then((student) =>{
                 if(!student){
-                    return done(null,false,{message:"Can't find that ID"})
+                    return done(null,false,{message:"Can't find that ID"})                    
                 }
-
                 bcrypt.compare(password, student.password, (err, is_match)=>{
                     if(err){
                         throw err;
@@ -32,18 +32,16 @@ module.exports = function(passport){
         })
     )
     
-passport.serializeUser((user, done)=> {
-    done(null, user.id);
+passport.serializeUser((registered_students, done)=> {
+    done(null, registered_students.id);
   });
   
-  passport.deserializeUser((id, done)=> {
+  passport.deserializeUser((student_id, done)=> {
       //to do - add a regex to search the id instead of the _id
-    if (id.match(/[0-9]^{8}$/)) {
-        // Yes, it's a valid ObjectId, proceed with `findById` call.
-        registered_students.findById(id, (err, student)=> {
+    
+        registered_students.findById(registered_students.id, (err, student)=> {
             done(err, student);
           })
-      }
     
   });
 }
