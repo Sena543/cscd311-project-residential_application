@@ -73,7 +73,6 @@ res.render('/select_halls.ejs', {
     name: req.registered_students.name
 })
 <p><%= name</p>
-download fresh of the boat
 */
 
 
