@@ -1,4 +1,4 @@
-const mongoose = require('mongoose')
+const mongoose = require('mongoose');
 
 let registered_students_Schema = mongoose.Schema({
     name:{
