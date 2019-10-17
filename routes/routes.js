@@ -1,79 +1,94 @@
-const express = require('express')
-const registered_students = require('../models/studentModel.js')
-const router = express.Router();
+const router = require('express').Router();
 const passport = require('passport')
-const bcrypt = require('bcrypt')
-const {ensureAuthenticated } = require('../config/auth.js');
+const students = require('../models/studentModel');
+const hall = require('../models/hallModel.js');
+const bcrypt = require('bcryptjs');
+const {ensureAuthenticated,forwardAuthenticated } = require('../config/auth');
 
+/**
+ * TO DO
+ * add a function to generate student id and pass it to the student_id space
+ */
 
-
-router.get('/', (req, res)=>{
-    res.render('index.ejs');
-});
-
-router
-.get('/login',(req,res)=>{
-    res.render('login.ejs');
-})
-
-.post('/login',(req,res,next)=>{
-     passport.authenticate('local', 
-     { successRedirect: 'select_halls.ejs',
-      failureRedirect: 'login.ejs',
-       failureFlash: true })
-           //res.send('select_halls.ejs')
-       });
-
-router
-.get('/register',(req, res)=>{
-    res.render('register_student.ejs')
-})
-
-.post('/register', (req,res)=>{
-    
-    let [student_pass, confirm_pass]=[req.body.pass, req.body.confirm_pass]
-    const [student_name, student_id]=[req.body.name, req.body.id]
-    if(!student_pass||student_pass !== confirm_pass){
-        res.render('register_student.ejs')
-    }
-
-    let students = new registered_students({
-        name:student_name,
-        id:student_id,
-        password:student_pass
-    })
-    try{ 
-       bcrypt.genSalt(10, async function(err, salt){
-          await  bcrypt.hash(student_pass, salt, function(err, hash){
-                if(err){throw err};
-                students.password = hash;
-                students.save()
-                .then(success=>{
-                    res.render('login.ejs')
-                })
-                .catch(err=>console.log(err));
-                console.log(hash)
-                console.log(req.body)
-            })
-        })
-    }catch{throw new Error}
+// Login Page
+router.get('/login', forwardAuthenticated, (req, res) =>{
+     res.render('login')
     });
 
+// Register Page
+router.get('/register', forwardAuthenticated, (req, res) => {
+    res.render('register')
+});
 
-router
-.post('/save_selected_halls',ensureAuthenticated,(req, res)=>{
-    //res.send(req.students.id)
-    let [hall,block,room] = [req.body.choose_hall, req.body.choose_block, req.body.choose_room]
-    console.log(hall, block, room)
+ //endpoint to handle new student registration
+router.post('/register', async(req,res)=>{
+    
+    const {student_name,student_id, student_password} = req.body;
+    if(!student_name || !student_id || !student_password){
+        res.send('Enter your credentials')
+    }
+
+    //hashing the password
+    const hashpass=await bcrypt.genSalt(10, function(err, salt){
+        bcrypt.hash(req.body.password, salt, function(err, hash){
+            r_student.password = hash;
+        })
+    })
+    const r_student = new students({
+        name: req.body.name,
+        student_id:req.body.id,
+        student_password:hashpass
+    });
+
+    try{
+       await r_student.save();
+    }catch(err){
+        res.status(400).send(err);
+    }
+    console.log(hashpass)
+    console.log(r_student.password)
+    res.send('Done!!');
 })
 
-/*
-TO DO
-res.render('/select_halls.ejs', {
-    name: req.registered_students.name
+
+router.post('/login', (req, res, next) => {
+    passport.authenticate('local', {
+      successRedirect: '/select_halls',
+      failureRedirect: '/login',
+     // failureFlash: true
+    })(req, res, next);
+  });
+
+router.post('/select_halls',ensureAuthenticated, (req, res)=>{
+    const {hall_name, block, room_number} = req.body;
+    if(!hall_name || !block || !room_number){
+        res.send('Select or logout');
+    }
+
 })
-<p><%= name</p>
-*/
 
+/**
+ * students.findOne({id:student_id}, (err, student)=>{
+        if(err){
+            return res.send(err);
+        }
+        if(!student){
+            return res.send('student not found');
+        }
+        //compare passswords
+        bcrypt.compare(student_password, student.password,(err, checkPass)=>{
+            if(err){
+                return res.send(err);
+            }
+            if(!checkPass){
+                return res.send('invalid password');
+            }
+            res.send('/select_hall');
+        });
+    })
+     //student credentials
+    const {student_id, student_password} = req.body;
+    //find student from the database
+ */
 
-module.exports= router;
+module.exports = router;

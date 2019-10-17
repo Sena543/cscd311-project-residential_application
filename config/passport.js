@@ -1,52 +1,57 @@
 const LocalStrategy = require('passport-local').Strategy;
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
-const registered_students = require('../models/studentModel.js')
-
+//load the student model
+const students = require('../models/studentModel');
 
 module.exports = function(passport){
-
     passport.use(
-        new LocalStrategy({usernameField:'student_id'}, (student_id, password, done)=>{
-            //find student id with entered
-            registered_students.findOne({ id: student_id})
-            .then((student) =>{
+        new LocalStrategy({usernameField: 'student_id'}, (student_id, student_password, done)=>{
+            students.findOne({id:student_id})
+            .then((student)=>{
                 if(!student){
-                    return done(null,false,{message:"Can't find that ID"})                    
+                    return done(null, false, {message:'Student not found!'});
                 }
-                bcrypt.compare(password, student.password, (err, is_match)=>{
-                    if(err){
-                        throw err;
-                    }
+                //matching pass
+                bcrypt.compare(student_password, student.password, (err, isMatch)=>{
+                    if(err){ console.log(err)};
 
-                    if(is_match){
+                    if(isMatch){
                         return done(null, student)
-                    }else{
-                        return done(null, false, {message: 'Incorrect Password'})
+                    } else{
+                        return done(null, fasle, {message:'Password is incorrect'});
                     }
-                    
-                })
+                });
             })
-            .catch((err)=>console.log(err))
-        })
-    )
-    
-passport.serializeUser((registered_students, done)=> {
-    done(null, registered_students.id);
-  });
-  
-  passport.deserializeUser((student_id, done)=> {
-      //to do - add a regex to search the id instead of the _id
-    
-        registered_students.findById(registered_students.id, (err, student)=> {
-            done(err, student);
-          })
-    
-  });
-}
+            .catch((err)=>{ console.log(err);  }) 
+        })   
+    );
 
-/*registered_students.findById(id, (err, student)=> {
-      done(err, student);
+    passport.serializeUser(function(students, done) {
+        done(null, students.id);
+      });
       
-    }); */
+      passport.deserializeUser(function(id, done) {
+        students.findOne(students.id, function(err, student) {
+          done(err, student);
+        });
+      });
+
+}   
+
+/**
+ *  new LocalStrategy({usernameField: 'student_id'}, (student_id, password, done)=>{
+            students.findOne({id:student_id}, (err, student)=>{
+                if(err){return res.send(err) }
+
+                if(!student){return res.send('Student not found') }
+                 //compare passswords
+        bcrypt.compare(student_password, student.password,(err, checkPass)=>{
+            if(err){  return res.send(err); }
+
+            if(!checkPass){ return res.send('invalid password'); }
+            })
+        })
+    })
+ */
