@@ -67,28 +67,5 @@ router.post('/select_halls',ensureAuthenticated, (req, res)=>{
 
 })
 
-/**
- * students.findOne({id:student_id}, (err, student)=>{
-        if(err){
-            return res.send(err);
-        }
-        if(!student){
-            return res.send('student not found');
-        }
-        //compare passswords
-        bcrypt.compare(student_password, student.password,(err, checkPass)=>{
-            if(err){
-                return res.send(err);
-            }
-            if(!checkPass){
-                return res.send('invalid password');
-            }
-            res.send('/select_hall');
-        });
-    })
-     //student credentials
-    const {student_id, student_password} = req.body;
-    //find student from the database
- */
 
 module.exports = router;
